@@ -2,6 +2,7 @@ from dependency_injector import containers, providers
 from app.pth_model.application.pth_model_service import PthModelService
 from app.pth_model.infra.s3.s3_manager import S3Manager
 from app.pth_model.infra.repository.pth_model_metadata_repo import PthModelMetadataRepository
+from app.pth_model.domain.repository.s3_manager_repo import IS3Manager
 
 
 class Container(containers.DeclarativeContainer):
@@ -19,7 +20,8 @@ class Container(containers.DeclarativeContainer):
     # PyTorch 모델 서비스
     pth_model_service = providers.Factory(
         PthModelService,
-        metadata_repository=metadata_repository
+        metadata_repository=metadata_repository,
+        s3_manager=s3_manager
     )
 
 

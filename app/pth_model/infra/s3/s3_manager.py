@@ -5,10 +5,12 @@ from typing import List, Dict, Any
 from fastapi import UploadFile
 from botocore.exceptions import ClientError, NoCredentialsError
 
+from app.pth_model.domain.repository.s3_manager_repo import IS3Manager
+
 logger = logging.getLogger(__name__)
 
 
-class S3Manager:
+class S3Manager(IS3Manager):
     """
     S3 파일 업로드 관리자
     """
@@ -100,6 +102,35 @@ class S3Manager:
                 })
         
         return results
+    
+    async def download_file(self, s3_key: str) -> bytes:
+        """
+        S3에서 파일을 다운로드합니다.
+        
+        Args:
+            s3_key: S3에 저장된 파일 키
+            
+        Returns:
+            bytes: 파일 바이너리 데이터
+            
+        Raises:
+            Exception: 파일 다운로드 실패 시
+        """
+        try:
+            response = self.s3_client.get_object(
+                Bucket=self.bucket_name,
+                Key=s3_key
+            )
+            
+            file_data = response['Body'].read()
+            logger.info(f"파일 다운로드 성공: {s3_key}")
+            
+            return file_data
+            
+        except (ClientError, NoCredentialsError) as e:
+            error_msg = f"S3 다운로드 실패: {str(e)}"
+            logger.error(f"{error_msg} - 파일: {s3_key}")
+            raise Exception(error_msg)
     
     def test_connection(self) -> bool:
         """

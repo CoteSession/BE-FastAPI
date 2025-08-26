@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config.settings import settings
-from app.pth_model.interface.controller.pytorch_model_controller import router as pth_model_router
+from app.pth_model.interface.controller.pth_model_controller import router as pth_model_router
 from app.containers import Container
 
 app = FastAPI(
@@ -25,7 +25,7 @@ container = Container()
 app.container = container
 
 # 컨테이너 wiring 설정 (모든 모듈에 대해)
-container.wire(modules=["app.pth_model.interface.controller.pytorch_model_controller"])
+container.wire(modules=["app.pth_model.interface.controller.pth_model_controller"])
 
 # API 라우터 등록
 app.include_router(pth_model_router, prefix=settings.API_V1_STR)

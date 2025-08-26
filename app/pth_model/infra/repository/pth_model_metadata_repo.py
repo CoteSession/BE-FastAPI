@@ -1,7 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
-from typing import List
+from typing import List, Optional
 import logging
 
 from app.pth_model.domain.pth_model_metadata import PthModelMetadata
@@ -62,6 +62,43 @@ class PthModelMetadataRepository(IPthModelMetadataRepository):
                 logger.error("DB 저장 중 오류 발생: %s", e)
                 raise e
 
+    async def get_model_by_id(self, model_id: int) -> Optional[PthModelMetadata]:
+        """
+        ID로 특정 모델 메타데이터를 조회합니다.
+
+        Args:
+            model_id (int): 조회할 모델의 ID
+
+        Returns:
+            Optional[PthModelMetadata]: 조회된 모델 메타데이터 (없으면 None)
+
+        Raises:
+            SQLAlchemyError: 데이터베이스 조회 중 오류 발생 시
+        """
+        async for db in get_db():
+            try:
+                result = await db.execute(
+                    select(PthModelMetadataModel).where(PthModelMetadataModel.id == model_id)
+                )
+                model = result.scalar_one_or_none()
+                
+                if model is None:
+                    return None
+                
+                # 도메인 객체로 변환
+                return PthModelMetadata(
+                    id=model.id,
+                    model_name=model.model_name,
+                    s3_key=model.s3_key,
+                    file_size=model.file_size,
+                    created_at=model.created_at
+                )
+                
+            except SQLAlchemyError as e:
+                logger.error("DB 조회 중 오류 발생: %s", e)
+                raise e
+
+                
     def _convert_to_models_batch(self, metadata_vos: List[PthModelMetadata]) -> List[PthModelMetadataModel]:
         """
         Domain Entity를 SQLAlchemy Model로 배치 변환합니다.
@@ -106,3 +143,4 @@ class PthModelMetadataRepository(IPthModelMetadataRepository):
             )
             for model in metadata_models
         ]
+    

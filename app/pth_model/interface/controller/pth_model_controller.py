@@ -1,9 +1,10 @@
 from dependency_injector.wiring import inject, Provide
-from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, status
+from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, status, Response
 from typing import List
 from app.containers import Container
 
 from app.pth_model.application.pth_model_service import PthModelService, UploadModelResponse
+from app.pth_model.domain.pth_model_metadata import PthModelMetadata
 
 router = APIRouter(prefix="/pytorch-models")
 
@@ -48,3 +49,47 @@ async def upload_model_files(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"모델 파일 업로드 중 오류가 발생했습니다: {str(e)}"
         )
+
+
+@router.get("/{model_id}/download")
+@inject
+async def download_model_file(
+    model_id: int,
+    pth_model_service: PthModelService = Depends(Provide[Container.pth_model_service]),
+):
+    """
+    ID로 특정 PyTorch 모델 파일을 S3에서 다운로드합니다.
+    
+    Args:
+        model_id: 다운로드할 모델의 ID
+        pth_model_service: PyTorch 모델 서비스
+    
+    Returns:
+        Response: .pth 파일 바이너리 데이터
+    """
+    try:
+        file_data, filename = await pth_model_service.download_model_file(model_id)
+        if not file_data:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"ID {model_id}에 해당하는 모델 파일을 찾을 수 없습니다."
+            )
+        
+        return Response(
+            content=file_data,
+            media_type="application/octet-stream",
+            headers={
+                "Content-Disposition": f"attachment; filename={filename}",
+                "Content-Type": "application/octet-stream"
+            }
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"모델 파일 다운로드 중 오류가 발생했습니다: {str(e)}"
+        )
+
+
+

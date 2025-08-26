@@ -3,9 +3,9 @@ from fastapi import UploadFile
 from pydantic import BaseModel
 import logging
 
-from app.pth_model.infra.s3.s3_manager import S3Manager
 from app.pth_model.domain.pth_model_metadata import PthModelMetadata
 from app.pth_model.domain.repository.pth_model_metadata_reop import IPthModelMetadataRepository
+from app.pth_model.domain.repository.s3_manager_repo import IS3Manager
 
 logger = logging.getLogger(__name__)
 
@@ -23,14 +23,15 @@ class PthModelService:
     PyTorch 모델 서비스
     """
     
-    def __init__(self, metadata_repository: IPthModelMetadataRepository):
+    def __init__(self, metadata_repository: IPthModelMetadataRepository, s3_manager: IS3Manager):
         """
         서비스 초기화
         
         Args:
             metadata_repository: 메타데이터 저장소
+            s3_manager: S3 매니저
         """
-        self.s3_manager = S3Manager()
+        self.s3_manager = s3_manager
         self.metadata_repository = metadata_repository
     
     async def upload_model_files(self, files: List[UploadFile]) -> UploadModelResponse:
@@ -96,4 +97,39 @@ class PthModelService:
             
         except Exception as e:
             logger.error(f"모델 파일 업로드 중 오류 발생: {str(e)}")
+            raise e
+    
+    async def download_model_file(self, model_id: int) -> tuple[bytes, str]:
+        """
+        ID로 특정 PyTorch 모델 파일을 S3에서 다운로드합니다.
+        
+        Args:
+            model_id: 다운로드할 모델의 ID
+        
+        Returns:
+            tuple[bytes, str]: (파일 바이너리 데이터, 파일명)
+        
+        Raises:
+            ValueError: 모델을 찾을 수 없는 경우
+            Exception: S3 다운로드 실패 시
+        """
+        try:
+            # 1. DB에서 모델 메타데이터 조회
+            model_metadata = await self.metadata_repository.get_model_by_id(model_id)
+            if not model_metadata:
+                raise ValueError(f"ID {model_id}에 해당하는 모델을 찾을 수 없습니다.")
+            
+            # 2. S3에서 파일 다운로드
+            file_data = await self.s3_manager.download_file(model_metadata.s3_key)
+            filename = f"{model_metadata.model_name}.pth"
+            
+            logger.info(f"모델 ID {model_id} 파일 다운로드 완료: {filename}")
+            
+            return file_data, filename
+            
+        except ValueError as e:
+            logger.error(f"모델 조회 실패: {str(e)}")
+            raise e
+        except Exception as e:
+            logger.error(f"모델 파일 다운로드 중 오류 발생: {str(e)}")
             raise e

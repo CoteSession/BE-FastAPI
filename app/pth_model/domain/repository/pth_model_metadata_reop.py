@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List
+from typing import List, Optional
 
 from app.pth_model.domain.pth_model_metadata import PthModelMetadata
 
@@ -19,5 +19,18 @@ class IPthModelMetadataRepository(ABC):
 
         Returns:
             List[PthModelMetadata]: 저장된 모델 메타데이터 객체 리스트 (DB에서 생성된 ID 등 포함)
+        """
+        pass
+    
+    @abstractmethod
+    async def get_model_by_id(self, model_id: int) -> Optional[PthModelMetadata]:
+        """
+        ID로 특정 모델 메타데이터를 조회합니다.
+
+        Args:
+            model_id (int): 조회할 모델의 ID
+
+        Returns:
+            Optional[PthModelMetadata]: 조회된 모델 메타데이터 (없으면 None)
         """
         pass
