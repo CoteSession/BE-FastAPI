@@ -34,3 +34,27 @@ class IPthModelMetadataRepository(ABC):
             Optional[PthModelMetadata]: 조회된 모델 메타데이터 (없으면 None)
         """
         pass
+    
+    @abstractmethod
+    async def get_models_with_pagination(self, offset: int, limit: int) -> List[PthModelMetadata]:
+        """
+        페이징을 사용하여 모델 메타데이터 목록을 조회합니다.
+
+        Args:
+            offset (int): 건너뛸 레코드 수
+            limit (int): 조회할 레코드 수
+
+        Returns:
+            List[PthModelMetadata]: 모델 메타데이터 목록 (최신순)
+        """
+        pass
+    
+    @abstractmethod
+    async def get_total_count(self) -> int:
+        """
+        전체 모델 개수를 조회합니다.
+
+        Returns:
+            int: 전체 모델 개수
+        """
+        pass

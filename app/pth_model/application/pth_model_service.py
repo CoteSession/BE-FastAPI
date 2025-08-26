@@ -18,6 +18,15 @@ class UploadModelResponse(BaseModel):
     failed_files: List[str]
 
 
+class ModelListResponse(BaseModel):
+    """모델 목록 페이징 응답"""
+    models: List[PthModelMetadata]
+    current_page: int
+    page_size: int
+    total_count: int
+    total_pages: int
+
+
 class PthModelService:
     """
     PyTorch 모델 서비스
@@ -132,4 +141,56 @@ class PthModelService:
             raise e
         except Exception as e:
             logger.error(f"모델 파일 다운로드 중 오류 발생: {str(e)}")
+            raise e
+    
+    async def get_model_list(self, page: int, page_size: int) -> ModelListResponse:
+        """
+        PyTorch 모델 목록을 페이징으로 조회합니다.
+        
+        Args:
+            page: 페이지 번호 (1부터 시작)
+            page_size: 페이지당 항목 수
+        
+        Returns:
+            ModelListResponse: 페이징 정보가 포함된 모델 목록
+        
+        Raises:
+            ValueError: 잘못된 페이징 파라미터
+            Exception: DB 조회 실패 시
+        """
+        try:
+            # 페이징 파라미터 검증
+            if page < 1:
+                raise ValueError("페이지 번호는 1 이상이어야 합니다.")
+            if page_size < 1 or page_size > 100:
+                raise ValueError("페이지 크기는 1 이상 100 이하여야 합니다.")
+            
+            # Repository에서 페이징 로직 호출
+            offset = (page - 1) * page_size
+            models = await self.metadata_repository.get_models_with_pagination(
+                offset=offset, 
+                limit=page_size
+            )
+            
+            # 전체 개수 조회
+            total_count = await self.metadata_repository.get_total_count()
+            
+            # 전체 페이지 수 계산
+            total_pages = (total_count + page_size - 1) // page_size
+            
+            logger.info(f"모델 목록 조회 완료: page={page}, page_size={page_size}, 결과={len(models)}개, 전체={total_count}개")
+            
+            return ModelListResponse(
+                models=models,
+                current_page=page,
+                page_size=page_size,
+                total_count=total_count,
+                total_pages=total_pages
+            )
+            
+        except ValueError as e:
+            logger.error(f"페이징 파라미터 오류: {str(e)}")
+            raise e
+        except Exception as e:
+            logger.error(f"모델 목록 조회 중 오류 발생: {str(e)}")
             raise e

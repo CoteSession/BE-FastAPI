@@ -1,9 +1,9 @@
 from dependency_injector.wiring import inject, Provide
-from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, status, Response
+from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, status, Response, Query
 from typing import List
 from app.containers import Container
 
-from app.pth_model.application.pth_model_service import PthModelService, UploadModelResponse
+from app.pth_model.application.pth_model_service import PthModelService, UploadModelResponse, ModelListResponse
 from app.pth_model.domain.pth_model_metadata import PthModelMetadata
 
 router = APIRouter(prefix="/pytorch-models")
@@ -89,6 +89,42 @@ async def download_model_file(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"모델 파일 다운로드 중 오류가 발생했습니다: {str(e)}"
+        )
+
+
+@router.get("", response_model=ModelListResponse)
+@inject
+async def get_model_list(
+    page: int = Query(1, ge=1, description="페이지 번호 (1부터 시작)"),
+    page_size: int = Query(10, ge=1, le=100, description="페이지당 항목 수 (최대 100개)"),
+    pth_model_service: PthModelService = Depends(Provide[Container.pth_model_service]),
+):
+    """
+    PyTorch 모델 목록을 페이징으로 조회합니다.
+    
+    Args:
+        page: 페이지 번호 (1부터 시작)
+        page_size: 페이지당 항목 수 (기본값: 10, 최대: 100)
+        pth_model_service: PyTorch 모델 서비스
+    
+    Returns:
+        ModelListResponse: 페이징 정보가 포함된 모델 목록
+            - models: 모델 메타데이터 목록
+            - current_page: 현재 페이지 번호
+            - page_size: 페이지당 항목 수
+            - total_count: 전체 모델 개수
+            - total_pages: 전체 페이지 수
+    """
+    try:
+        result = await pth_model_service.get_model_list(page=page, page_size=page_size)
+        return result
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"모델 목록 조회 중 오류가 발생했습니다: {str(e)}"
         )
 
 

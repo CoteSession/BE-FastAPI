@@ -1,5 +1,5 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.exc import SQLAlchemyError
 from typing import List, Optional
 import logging
@@ -96,6 +96,59 @@ class PthModelMetadataRepository(IPthModelMetadataRepository):
                 
             except SQLAlchemyError as e:
                 logger.error("DB 조회 중 오류 발생: %s", e)
+                raise e
+    
+    async def get_models_with_pagination(self, offset: int, limit: int) -> List[PthModelMetadata]:
+        """
+        페이징을 사용하여 모델 메타데이터 목록을 조회합니다.
+
+        Args:
+            offset (int): 건너뛸 레코드 수
+            limit (int): 조회할 레코드 수
+
+        Returns:
+            List[PthModelMetadata]: 모델 메타데이터 목록 (최신순)
+
+        Raises:
+            SQLAlchemyError: 데이터베이스 조회 중 오류 발생 시
+        """
+        async for db in get_db():
+            try:
+                result = await db.execute(
+                    select(PthModelMetadataModel)
+                    .order_by(PthModelMetadataModel.id.desc())  # 최신순 정렬
+                    .offset(offset)
+                    .limit(limit)
+                )
+                models = result.scalars().all()
+                
+                # 도메인 객체로 변환
+                return self._convert_to_domains_batch(models)
+                
+            except SQLAlchemyError as e:
+                logger.error("DB 페이징 조회 중 오류 발생: %s", e)
+                raise e
+    
+    async def get_total_count(self) -> int:
+        """
+        전체 모델 개수를 조회합니다.
+
+        Returns:
+            int: 전체 모델 개수
+
+        Raises:
+            SQLAlchemyError: 데이터베이스 조회 중 오류 발생 시
+        """
+        async for db in get_db():
+            try:
+                result = await db.execute(
+                    select(func.count(PthModelMetadataModel.id))
+                )
+                total_count = result.scalar()
+                return total_count
+                
+            except SQLAlchemyError as e:
+                logger.error("DB 전체 개수 조회 중 오류 발생: %s", e)
                 raise e
 
                 
