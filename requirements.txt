@@ -1,17 +1,13 @@
-fastapi
-uvicorn[standard]
-pydantic
-pydantic-settings
-pydantic[email]
-python-multipart
-python-jose[cryptography]
-passlib[bcrypt]
-sqlalchemy
-alembic
-psycopg2-binary
-aiomysql
-python-dotenv
-pytest
-httpx
-boto3
-dependency-injector
+fastapi  # FastAPI 웹 프레임워크
+uvicorn[standard]  # ASGI 서버 (FastAPI 실행용)
+pydantic  # 데이터 검증 및 직렬화 라이브러리
+pydantic-settings  # 환경 변수 설정 관리
+python-multipart  # 파일 업로드 처리
+sqlalchemy  # ORM (데이터베이스 객체 관계 매핑)
+alembic  # 데이터베이스 마이그레이션 도구
+aiomysql  # MySQL 비동기 드라이버
+python-dotenv  # 환경 변수 로드 (.env 파일)
+pytest  # 테스트 프레임워크
+httpx  # HTTP 클라이언트 (테스트용)
+boto3  # AWS SDK (S3 등 AWS 서비스 사용)
+dependency-injector  # 의존성 주입 컨테이너
