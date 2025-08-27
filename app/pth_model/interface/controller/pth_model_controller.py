@@ -6,33 +6,33 @@ from app.containers import Container
 from app.pth_model.application.pth_model_service import PthModelService, UploadModelResponse, ModelListResponse
 from app.pth_model.domain.pth_model_metadata import PthModelMetadata
 
-router = APIRouter(prefix="/pytorch-models")
+router = APIRouter(prefix="/pth-models")
 
 
 @router.post("/upload", status_code=201, response_model=UploadModelResponse)
 @inject
 async def upload_model_files(
-    files: List[UploadFile] = File(...),
+    pth_files: List[UploadFile] = File(...),
     pth_model_service: PthModelService = Depends(Provide[Container.pth_model_service]),
 ):
     """
     여러 개의 PyTorch 모델 파일(.pth)을 업로드합니다.
     
     Args:
-        files: 업로드할 .pth 파일들
-        pytorch_model_service: PyTorch 모델 서비스
+        pth_files: 업로드할 .pth 파일들
+        pth_model_service: PyTorch 모델 서비스
     
     Returns:
         UploadModelResponse: 업로드 결과
     """
-    if not files:
+    if not pth_files:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="업로드할 파일이 없습니다."
         )
     
     # .pth 파일만 허용
-    for file in files:
+    for file in pth_files:
         if not file.filename.endswith('.pth'):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -41,7 +41,7 @@ async def upload_model_files(
     
     try:
         result = await pth_model_service.upload_model_files(
-            files=files
+            files=pth_files
         )
         return result
     except Exception as e:

@@ -1,4 +1,4 @@
-name: Deploy FastAPI Docker Compose to Test EC2
+name: Deploy FastAPI Docker Compose to EC2
 
 # 0. test 브랜치에 Pull Request 때 워크플로우 실행
 on:
@@ -66,20 +66,20 @@ jobs:
             cd /home/ubuntu/docker/app
 
             # 8-2. fastapi-app 컨테이너 중지
-            echo "🛑 Stopping ct-fast-app container"
-            docker-compose stop ct-fast-app
+            echo "🛑 Stopping fast-app container"
+            docker-compose stop fast-app
 
             # 8-3. fast-app 컨테이너 삭제
-            echo "🧹 Removing ct-fast-app container"
-            docker-compose rm -f ct-fast-app
+            echo "🧹 Removing fast-app container"
+            docker-compose rm -f fast-app
 
             # 8-4. 최신 이미지 pull
-            echo "📥 Pulling latest ct-fast-app image"
-            docker-compose pull ct-fast-app
+            echo "📥 Pulling latest fast-app image"
+            docker-compose pull fast-app
 
             # 8-5. 새 컨테이너로 실행
-            echo "🚀 Starting new ct-fastapi-app container"
-            docker-compose up -d ct-fast-app
+            echo "🚀 Starting new fast-app container"
+            docker-compose up -d fast-app
 
             # 8-6. 사용하지 않는 이미지/컨테이너 정리
             echo "🧼 Cleaning up unused Docker resources"

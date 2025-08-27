@@ -13,25 +13,35 @@ class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
     
     # 환경 설정
-    ENVIRONMENT: str = "development"
+    ENVIRONMENT: str = "dev"  # dev 또는 prod
     DEBUG: bool = True
     
     # CORS 설정
     ALLOWED_HOSTS: List[str] = ["*"]
     
     # MySQL 데이터베이스 설정
-    DATABASE_URL: str = "mysql+aiomysql://root:password@localhost:3306/fastapi_db"
+    DATABASE_URL: str
     
     # JWT 설정
-    SECRET_KEY: str = "your-secret-key-here"
+    SECRET_KEY: str
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     
     # AWS S3 설정
-    AWS_ACCESS_KEY_ID: str = os.getenv("AWS_ACCESS_KEY_ID", "")
-    AWS_SECRET_ACCESS_KEY: str = os.getenv("AWS_SECRET_ACCESS_KEY", "")
-    AWS_REGION: str = os.getenv("AWS_REGION", "ap-northeast-2")
-    AWS_S3_BUCKET_NAME: str = os.getenv("AWS_S3_BUCKET_NAME", "")
+    AWS_ACCESS_KEY_ID: str
+    AWS_SECRET_ACCESS_KEY: str
+    AWS_REGION: str = "ap-northeast-2"
+    AWS_S3_BUCKET_NAME: str
+    
+    @property
+    def is_production(self) -> bool:
+        """프로덕션 환경인지 확인"""
+        return self.ENVIRONMENT == "prod"
+    
+    @property
+    def is_development(self) -> bool:
+        """개발 환경인지 확인"""
+        return self.ENVIRONMENT == "dev"
     
     class Config:
         env_file = ".env"
