@@ -1,6 +1,6 @@
 name: Deploy FastAPI Docker Compose to EC2
 
-# 0. test 브랜치에 Pull Request 때 워크플로우 실행
+# 0. main 브랜치에 Pull Request 때 워크플로우 실행
 on:
   pull_request:
     branches:
