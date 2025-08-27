@@ -12,5 +12,5 @@ class PthModelMetadata(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     model_name: Mapped[str] = mapped_column(String(255), nullable=False)
     file_size: Mapped[int] = mapped_column(BigInteger, nullable=False)
-    s3_key: Mapped[str] = mapped_column(Text, nullable=False, unique=True)
+    s3_key: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now, nullable=False)
