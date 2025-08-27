@@ -43,30 +43,33 @@ def get_log_dir():
 
 def setup_logging():
    """환경에 따른 로깅 설정"""
-   env = os.getenv('ENV', 'dev')
-   print(f"현재 환경: {env}")
+   environment = os.getenv('ENVIRONMENT', 'dev')
+   print(f"현재 환경: {environment}")
    print(f"현재 운영체제: {platform.system()}")
    
-   if env == 'prod':
+   if environment == 'prod':
        # 프로덕션: 레벨별 파일 로깅 (Spring Boot 방식)
        log_dir = get_log_dir()
        print(f"로그 폴더 생성 위치: {os.path.abspath(log_dir)}")
        os.makedirs(log_dir, exist_ok=True)
-       
-       # 현재 날짜 (주석처리 - TimedRotatingFileHandler에서 자동 처리)
-       # today = datetime.now().strftime('%Y-%m-%d')
        
        # 핸들러 생성 (공통 함수 사용)
        info_handler = create_timed_handler(log_dir, 'INFO', logging.INFO)
        warn_handler = create_timed_handler(log_dir, 'WARN', logging.WARNING)
        error_handler = create_timed_handler(log_dir, 'ERROR', logging.ERROR)
        
-       # 로깅 설정
+       # 프로덕션: 파일 로깅만 설정 (터미널 출력 차단)
        logging.basicConfig(
            level=logging.INFO,
            handlers=[info_handler, warn_handler, error_handler],
            force=True
        )
+       
+       # 루트 로거의 기본 핸들러 제거 (터미널 출력 차단)
+       root_logger = logging.getLogger()
+       for handler in root_logger.handlers[:]:
+           if isinstance(handler, logging.StreamHandler) and not isinstance(handler, TimedRotatingFileHandler):
+               root_logger.removeHandler(handler)
        
    else:
        # 개발: 콘솔 로깅
